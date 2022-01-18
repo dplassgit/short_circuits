@@ -11,7 +11,7 @@ void setup() {
   // Start Serial Comminication
   Serial.begin(9600);
 
-  // DIGITISER Stuff
+  // RGB Matrix Stuff
   pinMode(SER, OUTPUT); // SER (data) pin as output
   pinMode(CLK, OUTPUT); // CLK (clock) pin as output
   pinMode(LATCH, OUTPUT); // LATCH pin as output
@@ -26,18 +26,21 @@ void setup() {
 
 // 1. row (active low) in data1 xxxxrrrr
 // 2. color (active high) for each column: red in data1 rrrrxxxx, blue and green in data0 bbbbgggg
-void turnOn(int row, int column, int red, int green, int blue) {
+void turnOn(int row, int column, int rgb) {
   int data1 = 0;
   // row is active low, so have to ~ it, but colors are active high so have to & it.
   data1 = (~(1 << row)) & 0b00001111;
   int data0 = 0;
-  if (red) {
+  if (rgb & 0b001) {
+    // red
     data1 |= 0b00010000 << column;
   }
-  if (green) {
+  if (rgb & 0b010) {
+    // green
     data0 |= 1 << column;
   }
-  if (blue) {
+  if (rgb & 0b100) {
+    // blue
     data0 |= 0b00010000 << column;
   }
 
@@ -47,15 +50,16 @@ void turnOn(int row, int column, int red, int green, int blue) {
   digitalWrite(LATCH, HIGH);
 }
 
-int row = 0;
-int column = 0;
-int color = 0b001; // bgr
-
+int mode = 0;
 void loop() {
-  oneLedOnLoop();
-//  allLedsOnLoop();
+  if (mode) {
+    oneLedOnLoop();
+  } else {
+    allLedsOnLoop();
+  }
 }
 
+int color = 0b001; // bgr
 int iteration = 0;
 /**
   Turns on all the LEDS on using the color in "color".
@@ -63,27 +67,31 @@ int iteration = 0;
   Then goes to the next "color".
 */
 void allLedsOnLoop() {
-  for (row = 0; row < 4; ++row) {
-    for (column = 0; column < 4; ++column) {
-      turnOn(row, column, color & 1, (color & 2) >> 1, (color & 4) >> 2);
+  for (int row = 0; row < 4; ++row) {
+    for (int column = 0; column < 4; ++column) {
+      turnOn(row, column, color);
     }
   }
   iteration++;
   if (iteration == 200) {
     color++;
     if (color == 8) {
+      mode = 1 - mode;
       color = 1;
     }
     iteration = 0;
   }
 }
 
+int row = 0;
+int column = 0;
+
 /**
   Turn the LED at "row", "column" to the current "color", then goes to the next column,
   then the next row, then the next color.
 */
 void oneLedOnLoop() {
-  turnOn(row, column, color & 1, (color & 2) >> 1, (color & 4) >> 2);
+  turnOn(row, column, color);
   column++;
   if (column == 4) {
     column = 0;
@@ -93,10 +101,11 @@ void oneLedOnLoop() {
     row = 0;
     color++;
     if (color == 8) {
+      mode = 1 - mode;
       color = 1;
     }
     Serial.print("Color is now: ");
     Serial.println(color, BIN);
   }
-  delay(200);
+  delay(100);
 }
