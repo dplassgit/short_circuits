@@ -1,5 +1,5 @@
 /**
-   Turns on LED in the matrix, in each color.
+   Demos: Turns on LED in the matrix, in each color.
 */
 
 const int SER = 3;
@@ -17,7 +17,7 @@ void setup() {
   pinMode(LATCH, OUTPUT); // LATCH pin as output
   pinMode(OE, OUTPUT); // Output Enable
 
-  analogWrite(OE, 0); // Set brightness to full
+  analogWrite(OE, 50); // Set brightness to medium
 }
 
 // lower 4 bits of data1: active low row select, xxxxabcd a=top d=bottom
